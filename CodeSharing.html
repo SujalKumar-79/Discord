@@ -42,7 +42,7 @@
     }
 
     .message {
-      margin-bottom: 1rem;
+      margin-bottom: 2rem;
       white-space: pre-wrap;
       word-wrap: break-word;
     }
@@ -163,6 +163,19 @@
       transform: translate(-50%, -50%);
       font-weight: bold;
     }
+
+    .message:nth-child(odd) {
+    background-color: #41424a55;
+    padding: 1rem;
+    border-radius: 8px;
+    }
+
+    .message:nth-child(even) {
+    background-color: #41424a5c;
+    padding: 1rem;
+    border-radius: 8px;
+    }
+
   </style>
 </head>
 <body>
@@ -238,7 +251,6 @@
       chatInput.focus();
       chatMessages.scrollTop = chatMessages.scrollHeight;
 
-      // Hide placeholder when message is sent
       if (chatMessages.children.length > 1) {
         placeholder.style.display = 'none';
       }
@@ -282,7 +294,6 @@
       }
     });
 
-    // ESC key functionality to cancel file preview
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && pendingFile) {
         pendingFile = null;
