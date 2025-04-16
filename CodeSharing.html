@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Code Chat</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #1e1f22;
+      color: #ddd;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat-container {
+      width: 1100px;
+      height: 90vh;
+      background-color: #313338;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      position: relative;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+      background: #2b2d31;
+      position: relative;
+    }
+
+    .message {
+      margin-bottom: 1rem;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .message pre {
+      background-color: #1e1f22;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+
+    .message a {
+      color: #58a6ff;
+      text-decoration: underline;
+    }
+
+    .chat-input {
+      position: sticky;
+      bottom: 0;
+      background: #2b2d31;
+      padding: 1rem;
+      border-top: 1px solid #1e1f22;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .file-preview {
+      background-color: #1e1f22;
+      border: 1px solid #5865f2;
+      border-radius: 8px;
+      padding: 0.75rem;
+      color: #ccc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .file-preview span {
+      font-size: 0.9rem;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.5rem;
+    }
+
+    textarea {
+      flex: 1;
+      background-color: #1e1f22;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: #ddd;
+      font-size: 1rem;
+      font-family: 'Consolas', monospace;
+      resize: none;
+      outline: none;
+      min-height: 50px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    textarea:focus {
+      box-shadow: 0 0 0 2px #5865f2;
+    }
+
+    .send-button {
+      background-color: #5865f2;
+      color: white;
+      padding: 0.75rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .send-button:hover {
+      background-color: #4752c4;
+    }
+
+    .drag-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 60px;
+      background: rgba(88, 101, 242, 0.05);
+      border: 2px dashed #5865f2;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #5865f2;
+      font-size: 1.2rem;
+      font-weight: bold;
+      opacity: 0;
+      transform: scale(0.95);
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      z-index: 2;
+    }
+
+    .drag-overlay.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .placeholder {
+      font-size: 1.1rem;
+      color: #bbb;
+      text-align: center;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-messages" id="chatMessages">
+      <div class="placeholder" id="chatPlaceholder">Drag & Drop your file or share code</div>
+      <div class="drag-overlay" id="dragOverlay">Drop your file here</div>
+    </div>
+    <div class="chat-input">
+      <div id="filePreviewContainer"></div>
+      <div class="input-row">
+        <textarea id="chatInput" rows="1" placeholder="Type your message or code..." oninput="autoResize(this)"></textarea>
+        <button class="send-button" onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <script>
+    hljs.highlightAll();
+
+    function autoResize(textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+    }
+
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const filePreviewContainer = document.getElementById('filePreviewContainer');
+    const overlay = document.getElementById('dragOverlay');
+    const placeholder = document.getElementById('chatPlaceholder');
+
+    let pendingFile = null;
+
+    function sendMessage() {
+      const msg = chatInput.value.trim();
+      if (!msg && !pendingFile) return;
+
+      const messageDiv = document.createElement("div");
+      messageDiv.classList.add("message");
+
+      if (msg) {
+        if (msg.startsWith("```") && msg.endsWith("```")) {
+          const code = msg.slice(3, -3).trim();
+          const pre = document.createElement("pre");
+          const codeBlock = document.createElement("code");
+          codeBlock.textContent = code;
+          codeBlock.classList.add("language-javascript");
+          pre.appendChild(codeBlock);
+          messageDiv.appendChild(pre);
+          hljs.highlightElement(codeBlock);
+        } else {
+          messageDiv.textContent = msg;
+        }
+      }
+
+      if (pendingFile) {
+        const url = URL.createObjectURL(pendingFile);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = pendingFile.name;
+        link.textContent = `📎 ${pendingFile.name} (${(pendingFile.size / 1024).toFixed(1)} KB)`;
+        link.target = "_blank";
+        messageDiv.appendChild(document.createElement('br'));
+        messageDiv.appendChild(link);
+        pendingFile = null;
+        filePreviewContainer.innerHTML = '';
+      }
+
+      chatMessages.appendChild(messageDiv);
+      chatInput.value = '';
+      autoResize(chatInput);
+      chatInput.focus();
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      // Hide placeholder when message is sent
+      if (chatMessages.children.length > 1) {
+        placeholder.style.display = 'none';
+      }
+    }
+
+    chatMessages.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      overlay.classList.add('visible');
+    });
+
+    chatMessages.addEventListener('dragleave', (e) => {
+      if (!chatMessages.contains(e.relatedTarget)) {
+        overlay.classList.remove('visible');
+      }
+    });
+
+    chatMessages.addEventListener('drop', (e) => {
+      e.preventDefault();
+      overlay.classList.remove('visible');
+
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        pendingFile = files[0];
+        previewFile(pendingFile);
+      }
+    });
+
+    function previewFile(file) {
+      filePreviewContainer.innerHTML = `
+        <div class="file-preview">
+          <span>📎 ${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
+          <button onclick="sendMessage()">Send</button>
+        </div>
+      `;
+    }
+
+    chatInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // ESC key functionality to cancel file preview
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && pendingFile) {
+        pendingFile = null;
+        filePreviewContainer.innerHTML = '';
+      }
+    });
+  </script>
+</body>
+</html>
