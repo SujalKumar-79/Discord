@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Up</title>
+  <link rel="stylesheet" href="log-in.css">
+  <style>
+    .password-wrapper {
+      position: relative;
+    }
+    .toggle-password {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-box">
+      <h2>Create Account</h2>
+      <input type="text" id="signup-name" placeholder="Enter your name" />
+      <input type="text" id="signup-email" placeholder="Enter your email" />
+      <div class="password-wrapper">
+        <input type="password" id="signup-password" placeholder="Create password" oninput="toggleIcon(this)" />
+        <span class="toggle-password" onclick="togglePassword('signup-password', this)">👁️</span>
+      </div>
+      <div class="password-wrapper">
+        <input type="password" id="signup-confirm-password" placeholder="Confirm password" oninput="toggleIcon(this)" />
+        <span class="toggle-password" onclick="togglePassword('signup-confirm-password', this)">👁️</span>
+      </div>
+      <p id="signup-error" class="error"></p>
+      <button onclick="signUp()">Sign Up →</button>
+    </div>
+  </div>
+
+  <script>
+    const users = {
+      "sujalkumar66965@gmail.com": "Sujal@123",
+      "anant.chauhan2104@gmail.com": "Anant@123",
+      "sidharthkhankariyal@gmail.com": "Sid@1234"
+    };
+
+    function signUp() {
+      const name = document.getElementById("signup-name").value.trim();
+      const emailInput = document.getElementById("signup-email").value.trim();
+      const password = document.getElementById("signup-password").value.trim();
+      const confirmPassword = document.getElementById("signup-confirm-password").value.trim();
+      const error = document.getElementById("signup-error");
+
+      error.textContent = "";
+      const email = emailInput.toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!name || !email || !password || !confirmPassword) {
+        error.textContent = "All fields are required";
+        setTimeout(() => error.textContent = "", 2000);
+        return;
+      }
+
+      if (!emailRegex.test(email)) {
+        error.textContent = "Enter a valid email address";
+        setTimeout(() => error.textContent = "", 2000);
+        return;
+      }
+
+      if (users.hasOwnProperty(email)) {
+        error.textContent = "Account with this email already exists";
+        setTimeout(() => error.textContent = "", 2000);
+        return;
+      }
+
+      if (password.length < 6) {
+        error.textContent = "Password must be at least 6 characters";
+        setTimeout(() => error.textContent = "", 2000);
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        error.textContent = "Passwords do not match";
+        setTimeout(() => error.textContent = "", 2000);
+        return;
+      }
+
+      users[email] = password;
+      alert("Account created successfully! Redirecting to login...");
+      window.location.href = "log-in.html";
+    }
+
+    function togglePassword(id, el) {
+      const input = document.getElementById(id);
+      input.type = input.type === "password" ? "text" : "password";
+      el.textContent = input.type === "password" ? "👁️" : "🙈";
+    }
+
+    function toggleIcon(input) {
+      const icon = input.nextElementSibling;
+      icon.style.display = input.value.length ? "block" : "none";
+    }
+
+    document.querySelectorAll("button").forEach(button => {
+      button.addEventListener("mouseenter", e => {
+        const rect = button.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        button.style.setProperty("--x", `${x}px`);
+        button.style.setProperty("--y", `${y}px`);
+      });
+    });
+  </script>
+</body>
+</html>

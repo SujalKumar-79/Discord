@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login</title>
+  <link rel="stylesheet" href="log-in.css">
+  <style>
+    .password-wrapper {
+      position: relative;
+    }
+    .toggle-password {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-box">
+      <h2>Welcome Back</h2>
+      <input type="text" id="username" placeholder="Email">
+      <div class="password-wrapper">
+        <input type="password" id="password" placeholder="Password" oninput="toggleIcon(this)">
+        <span class="toggle-password" onclick="togglePassword('password', this)">👁️</span>
+      </div>
+      <p id="error" class="error"></p>
+      <button onclick="login()">Login →</button>
+
+      <div class="small-buttons">
+        <button onclick="forgotPassword()">Forgot Password</button>
+        <button onclick="signup()">Sign Up</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const users = {
+      "sujalkumar66965@gmail.com": "Sujal@123",
+      "anant.chauhan2104@gmail.com": "Anant@123",
+      "sidharthkhankariyal@gmail.com": "Sid@1234"
+    };
+
+    function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const error = document.getElementById("error");
+
+      if (!username) {
+        error.textContent = "Username can't be empty";
+        setTimeout(() => error.textContent = "", 3000);
+        return;
+      }
+
+      if (!password) {
+        error.textContent = "Password can't be empty";
+        setTimeout(() => error.textContent = "", 3000);
+        return;
+      }
+
+      if (users[username] === password) {
+        error.textContent = "";
+        alert("Login successful! Redirecting to homepage...");
+        window.location.href = "homepage.html";
+      } else {
+        error.textContent = "Wrong username or password entered";
+        setTimeout(() => error.textContent = "", 3000);
+      }
+    }
+
+    function forgotPassword() {
+      window.location.href = "forgot-password.html";
+    }
+
+    function signup() {
+      window.location.href = "sign-up.html";
+    }
+
+    function togglePassword(id, el) {
+      const input = document.getElementById(id);
+      input.type = input.type === "password" ? "text" : "password";
+      el.textContent = input.type === "password" ? "👁️" : "🙈";
+    }
+
+    function toggleIcon(input) {
+      const icon = input.nextElementSibling;
+      icon.style.display = input.value.length ? "block" : "none";
+    }
+
+    document.querySelectorAll("button").forEach(button => {
+      button.addEventListener("mouseenter", e => {
+        const rect = button.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        button.style.setProperty("--x", `${x}px`);
+        button.style.setProperty("--y", `${y}px`);
+      });
+    });
+  </script>
+</body>
+</html>
