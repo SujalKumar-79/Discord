@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Code Chat</title>
+  <title>Share Your Code</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css">
   <style>
     * {
@@ -31,6 +31,7 @@
       overflow: hidden;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
       position: relative;
+
     }
 
     .chat-messages {
@@ -211,51 +212,53 @@
     let pendingFile = null;
 
     function sendMessage() {
-      const msg = chatInput.value.trim();
-      if (!msg && !pendingFile) return;
+  const msg = chatInput.value.trim();
+  if (!msg && !pendingFile) return;
 
-      const messageDiv = document.createElement("div");
-      messageDiv.classList.add("message");
+  const messageDiv = document.createElement("div");
+  messageDiv.classList.add("message");
 
-      if (msg) {
-        if (msg.startsWith("```") && msg.endsWith("```")) {
-          const code = msg.slice(3, -3).trim();
-          const pre = document.createElement("pre");
-          const codeBlock = document.createElement("code");
-          codeBlock.textContent = code;
-          codeBlock.classList.add("language-javascript");
-          pre.appendChild(codeBlock);
-          messageDiv.appendChild(pre);
-          hljs.highlightElement(codeBlock);
-        } else {
-          messageDiv.textContent = msg;
-        }
-      }
+  if (msg) {
+    const codeBlockRegex = /^```([\s\S]*?)```$/;
+    const match = msg.match(codeBlockRegex);
 
-      if (pendingFile) {
-        const url = URL.createObjectURL(pendingFile);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = pendingFile.name;
-        link.textContent = `📎 ${pendingFile.name} (${(pendingFile.size / 1024).toFixed(1)} KB)`;
-        link.target = "_blank";
-        messageDiv.appendChild(document.createElement('br'));
-        messageDiv.appendChild(link);
-        pendingFile = null;
-        filePreviewContainer.innerHTML = '';
-      }
-
-      chatMessages.appendChild(messageDiv);
-      chatInput.value = '';
-      autoResize(chatInput);
-      chatInput.focus();
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-
-      if (chatMessages.children.length > 1) {
-        placeholder.style.display = 'none';
-      }
+    if (match) {
+      const code = match[1].trim();
+      const pre = document.createElement("pre");
+      const codeEl = document.createElement("code");
+      codeEl.textContent = code;
+      codeEl.classList.add("language-javascript"); // You can dynamically detect language later
+      pre.appendChild(codeEl);
+      messageDiv.appendChild(pre);
+      hljs.highlightElement(codeEl);
+    } else {
+      messageDiv.textContent = msg;
     }
+  }
 
+  if (pendingFile) {
+    const url = URL.createObjectURL(pendingFile);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = pendingFile.name;
+    link.textContent = `${pendingFile.name} (${(pendingFile.size / 1024).toFixed(1)} KB)`;
+    link.target = "_blank";
+    messageDiv.appendChild(document.createElement('br'));
+    messageDiv.appendChild(link);
+    pendingFile = null;
+    filePreviewContainer.innerHTML = '';
+  }
+
+  chatMessages.appendChild(messageDiv);
+  chatInput.value = '';
+  autoResize(chatInput);
+  chatInput.focus();
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  if (chatMessages.children.length > 1) {
+    placeholder.style.display = 'none';
+  }
+}
     chatMessages.addEventListener('dragover', (e) => {
       e.preventDefault();
       overlay.classList.add('visible');
